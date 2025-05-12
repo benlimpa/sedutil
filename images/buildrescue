@@ -3,8 +3,10 @@ set -x
 ## define releases for tools
 . conf
 VERSIONINFO=`git describe --dirty`  || VERSIONINFO=tarball
-BUILDTYPE=RESCUE32
-ROOTDIR=32bit
+#BUILDTYPE=RESCUE32
+#ROOTDIR=32bit
+BUILDTYPE=RESCUE64
+ROOTDIR=64bit
 
 if [ x${1} == "xRescue32" ] ; then
 	BUILDTYPE="RESCUE32"
@@ -13,7 +15,7 @@ elif [ x${1} == "xRescue64" ] ; then
 	BUILDTYPE="RESCUE64"
 	ROOTDIR="64bit"
 else 
-	echo "NO BUILDTYPE specified defalted to Rescue32"
+	echo "NO BUILDTYPE specified defaulted to Rescue64"
 fi
 BUILDIMG=${BUILDTYPE}-${VERSIONINFO}.img
 echo "Building " $BUILDTYPE "image"
@@ -27,7 +29,7 @@ echo "Building " $BUILDTYPE "image"
 [ -x scratch/buildroot/${ROOTDIR}/target/sbin/sedutil-cli  ] || { echo " prereqs are not available "; exit 1; }
 [ -f buildroot/syslinux.cfg ] || { echo " prereqs are not available "; exit 1; }
 [ -f UEFI64/UEFI64-*.img.gz ] || { echo " prereqs are not available "; exit 1; }
-[ -f BIOS32/BIOS32-*.img.gz ] || { echo " prereqs are not available "; exit 1; }
+#[ -f BIOS32/BIOS32-*.img.gz ] || { echo " prereqs are not available "; exit 1; }
 #
 # Remaster the root file system
 sudo rm -rf scratch/rescuefs
@@ -46,7 +48,7 @@ sudo mv /tmp/issue etc/issue
 sudo rm etc/init.d/S99*
 sudo mkdir -p usr/sedutil
 sudo cp ../../UEFI64/UEFI64-*.img.gz usr/sedutil/
-sudo cp ../../BIOS32/BIOS32-*.img.gz usr/sedutil/
+#sudo cp ../../BIOS32/BIOS32-*.img.gz usr/sedutil/
 sudo find . | sudo cpio -o -H newc | xz -9 -C crc32 -c > ../buildroot/${ROOTDIR}/images/rescuefs.cpio.xz
 cd ../..
 sudo rm -rf scratch/rescuefs
