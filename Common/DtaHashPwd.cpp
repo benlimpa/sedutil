@@ -39,26 +39,18 @@ vector<uint8_t> hex2data(char * password)
 {
 	vector<uint8_t> h;
 	h.clear();
-	if ((false))
-		printf("strlen(password)=%d\n", (int)strlen(password));
-	if (strlen(password) != 64)
+	size_t password_len = strlen(password);
+	if ((password_len % 2) != 0)
 	{
-		//LOG(D) << "Hashed Password length isn't 64-byte, no translation";
-		h.clear();
-		for (uint16_t i = 0; i < (uint16_t)strnlen(password, 32); i++)
-			h.push_back((uint8_t)password[i]);
+		LOG(E) << "Hex password must have an even number of digits";
 		return h;
 	}
 
-	//printf("GUI hashed password=");
-	for (uint16_t i=0; i < (uint16_t)strlen(password); i+=2)
+	for (uint16_t i=0; i < (uint16_t)password_len; i+=2)
 	{
 		h.push_back((uint8_t)(((hex_digit_to_nybble(password[i]) << 4) & 0xf0)
                              |((hex_digit_to_nybble(password[i + 1]) ) & 0x0f)));
 	}
-	//for (uint16_t i = 0; i < (uint16_t)h.size(); i++)
-	//	fprintf(Output2FILE::Stream(), "%02x", h[i]);
-	//fprintf(Output2FILE::Stream(), "\n");
 	return h;
 }
 
@@ -111,18 +103,22 @@ void DtaHashPwd(vector<uint8_t> &hash, char * password, DtaDev * d, unsigned int
 {
 
     LOG(D1) << " Entered DtaHashPwd";
+    vector<uint8_t> password_bytes;
+    if (d->translate_req) {
+        password_bytes = hex2data(password);
+        if (password_bytes.empty() && strlen(password) != 0) {
+            LOG(E) << "Unable to decode hex password input";
+            hash.clear();
+            return;
+        }
+    } else {
+        password_bytes.assign(password, password + strnlen(password, 32));
+    }
 
 	//d->no_hash_passwords = true; // force no hashing for debug purpose
 	IFLOG(D4) fprintf(Output2FILE::Stream(), "d->translate_req = %d\n", d->translate_req);
 	if (d->no_hash_passwords) {
-		if (d->translate_req) { // host-hashed password, convert 64-byte ascii into 32-byte data ???????
-			hash = hex2data(password);
-		}
-		else {
-			hash.clear();
-			for (uint16_t i = 0; i < strnlen(password, 32); i++)
-				hash.push_back((uint8_t)password[i]);
-		}
+		hash = password_bytes;
 		// add the token overhead
 		hash.insert(hash.begin(), (uint8_t)hash.size());
 		hash.insert(hash.begin(), 0xd0);
@@ -140,11 +136,11 @@ void DtaHashPwd(vector<uint8_t> &hash, char * password, DtaDev * d, unsigned int
     vector<uint8_t> salt(serialNum,serialNum+sizeof(serialNum)-1);
 #endif // defined( USE_PASSWORD_SALT )
 
-    //	vector<uint8_t> salt(DEFAULTSALT);
+	//	vector<uint8_t> salt(DEFAULTSALT);
 	if (iter == 75000) {
-		DtaHashPassword(hash, password, salt);
+		DtaHashPassword(hash, password_bytes, salt);
 	} else {
-		DtaHashPassword(hash, password, salt, iter);
+		DtaHashPassword(hash, password_bytes, salt, iter);
 	}
 
     // non-printable char cause screen error
@@ -195,7 +191,7 @@ static
 int Testsedutil(const PBKDF_TestTuple *testSet, unsigned int testSetSize)
 {
     int pass = 1;
-    std::vector<uint8_t> hash, seaSalt;
+    std::vector<uint8_t> hash, seaSalt, password;
 
     for (unsigned int i = 0; i < testSetSize; i++) {
         const PBKDF_TestTuple &tuple = testSet[i];
@@ -206,7 +202,8 @@ int Testsedutil(const PBKDF_TestTuple *testSet, unsigned int testSetSize)
         }
 		printf("Password %s Salt %s Iterations %i Length %i\n", (char *)tuple.Password,
 			(char *) tuple.Salt, tuple.iterations, tuple.hashlen);
-		DtaHashPassword(hash, (char *) tuple.Password, seaSalt, tuple.iterations, tuple.hashlen);
+        password.assign(tuple.Password, tuple.Password + strlen(tuple.Password));
+		DtaHashPassword(hash, password, seaSalt, tuple.iterations, tuple.hashlen);
 		int fail = (testresult(hash, tuple.hexDerivedKey, tuple.hashlen) == 0);
         pass = pass & fail;
     }

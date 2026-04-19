@@ -32,6 +32,11 @@
 #include "DtaSession.h"
 #include "DtaCommand.h"
 #include "DtaJson.h"
+#include "DtaHashPwd.h"
+#if defined(__linux__)
+#include <linux/sed-opal.h>
+#include <sys/ioctl.h>
+#endif
 
 using namespace std;
 
@@ -577,6 +582,71 @@ bool DtaDev::identify(DTA_DEVICE_INFO& di)
     &&   DTAERROR_SUCCESS == drive->discovery0(di);
 }
 
+uint8_t DtaDev::printPasswordHash(char * password)
+{
+    LOG(D1) << "Entering DtaDev::printPasswordHash()";
+    vector<uint8_t> hash;
+    DtaHashPwd(hash, password, this);
+
+    /* std::hex overwrites flags; save them, so we do not alter other output later */
+    ios_base::fmtflags saved_flags = cout.flags();
+
+    /* First two bytes are actually the opal header */
+    for (size_t i = 2; i < hash.size(); ++i)
+        cout << hex << setfill('0') << setw(2) << (int)hash[i];
+    cout << endl;
+    cout.flags(saved_flags);
+    return 0;
+}
+
+uint8_t DtaDev::prepareForS3Sleep(uint8_t lockingrange, char * password)
+{
+#if !defined(__linux__)
+    (void)lockingrange;
+    (void)password;
+    LOG(E) << "S3 sleep support is only available on Linux";
+    return 1;
+#else
+    LOG(D1) << "Entering DtaDev::prepareForS3Sleep()";
+    if (NULL == drive || !drive->isOpen()) {
+        LOG(E) << "Device is not open";
+        return DTAERROR_DEVICE_NOT_OPEN;
+    }
+
+    uint8_t authResult = WithSimpleSession(OPAL_UID::OPAL_LOCKINGSP_UID,
+                                           password,
+                                           OPAL_UID::OPAL_ADMIN1_UID,
+                                           []() { return 0; });
+    if (authResult != 0) {
+        LOG(E) << "Unable to authenticate with the given password";
+        return authResult;
+    }
+
+    vector<uint8_t> hash;
+    DtaHashPwd(hash, password, this);
+    if (hash.size() < 2) {
+        LOG(E) << "Computed password hash is too short";
+        return DTAERROR_INVALID_PARAMETER;
+    }
+    hash.erase(hash.begin(), hash.begin() + 2);
+
+    struct opal_lock_unlock opal_ioctl_data = {};
+    opal_ioctl_data.l_state = OPAL_RW;
+    opal_ioctl_data.session.who = OPAL_ADMIN1;
+    opal_ioctl_data.session.opal_key.lr = lockingrange;
+
+    size_t hash_len = min(hash.size(), sizeof(opal_ioctl_data.session.opal_key.key));
+    memcpy(opal_ioctl_data.session.opal_key.key, hash.data(), hash_len);
+    opal_ioctl_data.session.opal_key.key_len = hash_len;
+
+    int err = ioctl(handleDescriptor(drive->osDeviceHandle), IOC_OPAL_SAVE, &opal_ioctl_data);
+    if (err < 0) {
+        LOG(E) << "Error saving the password to the kernel errno = " << errno;
+        return errno;
+    }
+    return 0;
+#endif
+}
 
 typedef struct ddipair {
     ddipair(string dr, DTA_DEVICE_INFO di) : devref(dr), device_info(di) {};

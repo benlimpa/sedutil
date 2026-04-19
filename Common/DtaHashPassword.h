@@ -29,7 +29,7 @@ using namespace std;
  * @param iter number of iterations to be preformed 
  * @param hashsize size of hash to be returned
  */
-void DtaHashPassword(vector<uint8_t> &hash, char * password, vector<uint8_t> salt,
+void DtaHashPassword(vector<uint8_t> &hash, const vector<uint8_t> &password, const vector<uint8_t> &salt,
         unsigned int iter = 75000, uint8_t hashsize = 32);
-void DtaHashPasswordLogging(vector<uint8_t> &hash, char * password, vector<uint8_t> salt,
+void DtaHashPasswordLogging(vector<uint8_t> &hash, const vector<uint8_t> &password, const vector<uint8_t> &salt,
 	unsigned int iter = 123, uint8_t hashsize = 32);

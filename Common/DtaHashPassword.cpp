@@ -38,7 +38,7 @@ extern "C" {
 #include <stdio.h>
 
 
-void DtaHashPassword(vector<uint8_t> &hash, char * password, vector<uint8_t> salt,
+void DtaHashPassword(vector<uint8_t> &hash, const vector<uint8_t> &password, const vector<uint8_t> &salt,
                      unsigned int iter, uint8_t hashsize) {
   LOG(D1) << " Entered DtaHashPassword";
   // if the hashsize can be > 255 the token overhead logic needs to be fixed
@@ -47,13 +47,13 @@ void DtaHashPassword(vector<uint8_t> &hash, char * password, vector<uint8_t> sal
 
   hash.clear();
 
-  if (0 < strnlen(password, 32)) {   // don't hash the default OPAL password ''
+  if (!password.empty()) {   // don't hash the default OPAL password ''
     hash.reserve(((size_t)hashsize) + 2); // hope this will prevent reallocation
     for (uint8_t i = 0; i < hashsize; i++) {
       hash.push_back(' ');
     }
 
-    cf_pbkdf2_hmac((uint8_t *)password, strnlen(password, 256),
+    cf_pbkdf2_hmac(password.data(), password.size(),
                    salt.data(), salt.size(),
                    iter,
                    hash.data(), hash.size(),
@@ -67,7 +67,7 @@ void DtaHashPassword(vector<uint8_t> &hash, char * password, vector<uint8_t> sal
 
 // hashing for logging ON OFF command
 
-void DtaHashPasswordLogging(vector<uint8_t> &hash, char * password, vector<uint8_t> salt,
+void DtaHashPasswordLogging(vector<uint8_t> &hash, const vector<uint8_t> &password, const vector<uint8_t> &salt,
                             unsigned int iter, uint8_t hashsize) {
 
   hash.clear();
@@ -76,7 +76,7 @@ void DtaHashPasswordLogging(vector<uint8_t> &hash, char * password, vector<uint8
     hash.push_back(' ');
   }
 
-  cf_pbkdf2_hmac((uint8_t *)password, strnlen(password, 256),
+  cf_pbkdf2_hmac(password.data(), password.size(),
                  salt.data(), salt.size(),
                  iter,
                  hash.data(), hash.size(),

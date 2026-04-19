@@ -110,10 +110,10 @@ uint8_t DtaOptions(int argc, char * argv[], DTA_OPTIONS * opts)
           baseOptions += 1;
           opts->usermode = true;
           LOG(D) << "user mode ON";
-        } else if (!(strcmp("-t", argv[i]))) {
+        } else if (!(strcmp("-t", argv[i])) || !(strcmp("-x", argv[i]))) {
           baseOptions += 1;
           opts->translate_req = true;
-          LOG(D) << "translate hashed string to data";
+          LOG(D) << "translate hex password string to raw bytes";
         } else if (!(strcmp("-n", argv[i]))) {
           baseOptions += 1;
           opts->no_hash_passwords = true;

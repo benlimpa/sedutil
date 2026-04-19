@@ -281,6 +281,14 @@ static uint8_t main_actions(int argc, char **argv, DtaDev *d, const DTA_OPTIONS 
     LOG(D) << "print default password";
     return d->printDefaultPassword();
 
+  case sedutiloption::printPasswordHash:
+    LOG(D) << "print password hash";
+    return d->printPasswordHash(argv[opts.password]);
+
+  case sedutiloption::prepareForS3Sleep:
+    LOG(D) << "Preparing for S3 sleep " << (uint16_t) opts.lockingrange;
+    return d->prepareForS3Sleep(opts.lockingrange, argv[opts.password]);
+
   case sedutiloption::rawCmd:
     LOG(D) << "Performing cmdDump ";
     return d->rawCmd(argv[argc - 7], argv[argc - 6], argv[argc - 5], argv[argc - 4], argv[argc - 3], argv[argc - 2]);
@@ -334,6 +342,9 @@ int main(int argc, char * argv[])
       if (d!=NULL) {
         // initialize instance variables no_hash_passwords and output_format
         d->no_hash_passwords = opts.no_hash_passwords;
+        d->translate_req = opts.translate_req;
+        d->usermodeON = opts.usermode;
+        d->skip_activate = opts.skip_activate;
         result = main_actions(argc, argv, d, opts);
       }
       break;

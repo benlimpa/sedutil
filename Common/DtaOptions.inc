@@ -318,6 +318,27 @@ BEGIN_OPTION(printDefaultPassword, 1) OPTION_IS(device)
 )-")
 END_OPTION
 
+BEGIN_OPTION(printPasswordHash, 2)
+    OPTION_IS(password)
+    OPTION_IS(device)
+    USAGE_IS(R"-(
+--printPasswordHash <password> <device>
+                                print the password hash as computed by sedutil
+                                output is hex-encoded without the OPAL token header
+)-")
+END_OPTION
+
+BEGIN_OPTION(prepareForS3Sleep, 3)
+    LOCKINGRANGEARG(lockingrange)
+    OPTION_IS(password)
+    OPTION_IS(device)
+    USAGE_IS(R"-(
+--prepareForS3Sleep <0...n> <Admin1password> <device>
+                                save the locking range key in the Linux kernel
+                                so the range can be restored after S3 resume
+)-")
+END_OPTION
+
 
 BEGIN_OPTION(setup_SUM, 6)
     LOCKINGRANGEARG(lockingrange)

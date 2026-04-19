@@ -255,7 +255,12 @@ public:
 
     virtual uint8_t TCGreset(uint8_t state) = 0;
 
-
+    /** Print password hash, computed with this device's serial number
+     */
+    uint8_t printPasswordHash(char * password);
+    /** Save the password hash to the OS for S3 sleep resume where supported. */
+    virtual uint8_t prepareForS3Sleep(uint8_t lockingrange, char * password);
+    
     /** Primitive to set the MBREnable flag.
      * @param state 0 or 1
      * @param Admin1Password  password of the locking sp administrative authority

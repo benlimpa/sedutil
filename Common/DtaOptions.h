@@ -120,6 +120,8 @@ typedef enum _sedutiloption {
     validatePBKDF2,
     objDump,
     printDefaultPassword,
+    printPasswordHash,
+    prepareForS3Sleep,
     rawCmd,
     version,
     hashvalidation,

@@ -45,7 +45,8 @@ void usage()
     printf("-a (optional)                       do not activate LockingSP\n");
     printf("-u (optional)                       user mode ON\n");
     printf("-n (optional)                       no password hashing. Passwords will be sent in clear text!\n");
-    printf("-t (optional)                       translate hex password strings (only when not hashing, requires -n)\n");
+    printf("-t (optional)                       translate hex password strings to raw bytes\n");
+    printf("-x (optional)                       alias for -t\n");
     printf("-l (optional)                       log style output to stderr only\n");
     printf("\n");
     printf("actions \n");
