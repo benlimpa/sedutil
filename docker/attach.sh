@@ -1,3 +1,3 @@
 #!/bin/bash
 
-podman exec -it sedutil-build fish
+docker exec -it sedutil-build fish

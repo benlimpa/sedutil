@@ -1,3 +1,4 @@
 #!/bin/bash
 
-podman rm sedutil-build
+docker rm sedutil-build
+
