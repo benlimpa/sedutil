@@ -164,6 +164,37 @@ void DtaHashPwd(vector<uint8_t> &hash, char * password, DtaDev * d, unsigned int
 }
 
 
+void DtaHashPwd1200(vector<uint8_t> &hash, char * password, DtaDev * d, unsigned int iter)
+{
+    LOG(D1) << " Entered DtaHashPwd1200";
+    if (d->no_hash_passwords) {
+        hash.clear();
+        for (uint16_t i = 0; i < strnlen(password, 32); i++) {
+            hash.push_back((uint8_t)password[i]);
+        }
+        hash.insert(hash.begin(), (uint8_t)hash.size());
+        hash.insert(hash.begin(), 0xd0);
+        LOG(D1) << " Exit DtaHashPwd1200";
+        return;
+    }
+
+    char serialNum[21];
+    memset(serialNum, 0, sizeof(serialNum));
+    size_t serial_len = strnlen(d->getSerialNum(), sizeof(serialNum) - 1);
+    memcpy(serialNum, d->getSerialNum(), serial_len);
+    vector<uint8_t> salt(serialNum, serialNum + sizeof(serialNum) - 1);
+    vector<uint8_t> password_bytes(password, password + strnlen(password, 256));
+
+    if (iter == 75000) {
+        DtaHashPassword(hash, password_bytes, salt);
+    } else {
+        DtaHashPassword(hash, password_bytes, salt, iter);
+    }
+
+    LOG(D1) << " Exit DtaHashPwd1200";
+}
+
+
 struct PBKDF_TestTuple
 {
     uint8_t hashlen;

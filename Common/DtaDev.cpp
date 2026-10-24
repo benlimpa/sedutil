@@ -585,15 +585,23 @@ bool DtaDev::identify(DTA_DEVICE_INFO& di)
 uint8_t DtaDev::printPasswordHash(char * password)
 {
     LOG(D1) << "Entering DtaDev::printPasswordHash()";
-    vector<uint8_t> hash;
-    DtaHashPwd(hash, password, this);
+    vector<uint8_t> current_hash;
+    vector<uint8_t> hash_1200;
+
+    DtaHashPwd(current_hash, password, this);
+    DtaHashPwd1200(hash_1200, password, this);
 
     /* std::hex overwrites flags; save them, so we do not alter other output later */
     ios_base::fmtflags saved_flags = cout.flags();
 
-    /* First two bytes are actually the opal header */
-    for (size_t i = 2; i < hash.size(); ++i)
-        cout << hex << setfill('0') << setw(2) << (int)hash[i];
+    cout << "current: ";
+    for (size_t i = 2; i < current_hash.size(); ++i)
+        cout << hex << setfill('0') << setw(2) << (int)current_hash[i];
+    cout << endl;
+
+    cout << "1.20.0: ";
+    for (size_t i = 2; i < hash_1200.size(); ++i)
+        cout << hex << setfill('0') << setw(2) << (int)hash_1200[i];
     cout << endl;
     cout.flags(saved_flags);
     return 0;
@@ -617,13 +625,27 @@ uint8_t DtaDev::prepareForS3Sleep(uint8_t lockingrange, char * password)
                                            password,
                                            OPAL_UID::OPAL_ADMIN1_UID,
                                            []() { return 0; });
+    bool legacy = false;
     if (authResult != 0) {
-        LOG(E) << "Unable to authenticate with the given password";
+        vector<uint8_t> legacy_hash;
+        DtaHashPwd1200(legacy_hash, password, this);
+        authResult = WithSimpleSession(OPAL_UID::OPAL_LOCKINGSP_UID,
+                                       legacy_hash,
+                                       OPAL_UID::OPAL_ADMIN1_UID,
+                                       []() { return 0; });
+        legacy = (authResult == 0);
+    }
+    if (authResult != 0) {
+        LOG(E) << "Unable to authenticate with the given password using current or 1.20.0 hashing";
         return authResult;
     }
 
+    /* Save the hash that actually authenticated, so resume uses the same key */
     vector<uint8_t> hash;
-    DtaHashPwd(hash, password, this);
+    if (legacy)
+        DtaHashPwd1200(hash, password, this);
+    else
+        DtaHashPwd(hash, password, this);
     if (hash.size() < 2) {
         LOG(E) << "Computed password hash is too short";
         return DTAERROR_INVALID_PARAMETER;

@@ -34,6 +34,10 @@ using namespace std;
  * @param device the device where the password is to be used
  */
 void DtaHashPwd(vector<uint8_t> &hash, char * password, DtaDev * device, unsigned int iter = 75000);
+/** Hash the password using the sedutil 1.20.0 behavior.
+ * This preserves the old polished-serial salt and plaintext hashing path.
+ */
+void DtaHashPwd1200(vector<uint8_t> &hash, char * password, DtaDev * device, unsigned int iter = 75000);
 /** Test the hshing function using publicly available test cased and report */
 uint8_t TestPBKDF2();
 void data2ascii(vector<uint8_t> &h, vector<uint8_t>  &password);

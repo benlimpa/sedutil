@@ -323,7 +323,7 @@ BEGIN_OPTION(printPasswordHash, 2)
     OPTION_IS(device)
     USAGE_IS(R"-(
 --printPasswordHash <password> <device>
-                                print the password hash as computed by sedutil
+                                print both current and sedutil 1.20.0 password hashes
                                 output is hex-encoded without the OPAL token header
 )-")
 END_OPTION
