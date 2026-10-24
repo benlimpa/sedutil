@@ -50,9 +50,11 @@ the new code before flashing a newer PBA.
 - `images/buildrescue` / the UEFI image script: assemble the bootable image with
   syslinux from `scratch/syslinux-6.03`.
 - `images/buildroot/syslinux.cfg`: commit 7d87645 ("AMD Ryzen laptop keyboard fix")
-  removed `acpi=off noapic` from the `append` line, which is what makes the
-  keyboard work in the PBA. The bare `acpi=off` / `nomodeset` lines it left under
-  `kernel` are not valid syslinux directives and are ignored.
+  removed `acpi=off noapic` from the `append` line. Going by the commit title,
+  that is what fixed the keyboard in the PBA, but this has not been tested
+  separately. It also left bare `acpi=off` / `nomodeset` lines under `kernel`;
+  these are not syslinux keywords, so syslinux most likely ignores them (they
+  are not passed to the kernel), but that is also unverified.
 - `images/scratch/` (~12 GB) is the Buildroot work tree and can be regenerated.
 
 ## Still to work out for the write-up
